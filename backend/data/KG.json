@@ -1,0 +1,433 @@
+{
+  "person": {
+    "AtLocation": [
+      "the hospital",
+      "a bus stop",
+      "a building",
+      "a street corner",
+      "corner of two streets",
+      "entrance hall"
+    ],
+    "PartOf": [
+       "arm",
+        "hand",
+        "leg",
+        "ear",
+        "chest"
+    ],
+    "HasProperty": [
+      "standing straight",
+      "facing in any direction",
+      "standing in line"
+    ],
+    "IsA": [
+      "human",
+      "pedestrian"
+    ]
+  },
+  "rider": {
+    "AtLocation": [
+      "road",
+      "street",
+      "highway",
+      "park"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+      "fast",
+      "large"
+    ],
+    "IsA": [
+      "person",
+      "traveler",
+      "pedaler"
+    ]
+  },
+  "car": {
+    "AtLocation": [
+      "the city",
+      "parking lot",
+      "road",
+      "freeway",
+      "car park",
+      "street corner",
+      "highway",
+      "corner of two streets",
+      "driveway"
+    ],
+    "PartOf": [
+      "tire",
+      "wheel",
+      "bumper",
+      "car door",
+      "windshield",
+      "hood",
+      "trunk"
+    ],
+    "HasProperty": [
+       "red",
+        "blue",
+        "green",
+        "shiny",
+        "opaque"
+    ],
+    "IsA": [
+      "vehicle",
+      "motor vehicle",
+      "machine",
+      "artifact"
+    ]
+  },
+  "bus": {
+    "AtLocation": [
+      "road",
+      "street",
+      "a bus stop",
+      "bus station",
+      "bus terminal",
+      "city"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "form of public transportation",
+      "car",
+      "motor vehicle"
+    ]
+  },
+  "truck": {
+    "AtLocation": [
+      "road",
+      "street",
+      "freeway"
+    ],
+    "PartOf": [
+      "roof",
+      "bumper",
+      "tailgate"
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "vehicle",
+      "motor vehicle",
+      "automobile",
+      "wheeled vehicle"
+    ]
+  },
+  "bike": {
+    "AtLocation": [
+      "road",
+      "street",
+      "sidewalk",
+      "park"
+    ],
+    "PartOf": [
+      "sprocket"
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "bicycle"
+    ]
+  },
+  "motor": {
+    "AtLocation": [
+      "road",
+      "street",
+      "freeway"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "vehicle"
+    ]
+  },
+  "traffic light": {
+    "AtLocation": [
+        "street",
+        "corner of two streets"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+        "light",
+        "red light",
+        "green light",
+        "yellow light"
+    ]
+  },
+  "traffic sign": {
+    "AtLocation": [
+      "road",
+      "street",
+      "freeway",
+      "a fork in the road"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "Sign"
+    ]
+  },
+  "train": {
+    "AtLocation": [
+      "station",
+      "track"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+        "carriage"
+    ],
+    "IsA": [
+      "public transport"
+    ]
+  }
+  ,
+  "pedestrian": {
+    "AtLocation": [
+      "street",
+      "street corner"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "person",
+      "human",
+      "traveler"
+    ]
+  },
+  "cyclist": {
+    "AtLocation": [
+      "street"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "pedaler",
+      "athlete"
+    ]
+  },
+  "van": {
+    "AtLocation": [
+      "street"
+
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "car",
+      "truck",
+      "vehicle",
+      "automobile"
+    ]
+  },
+  "road": {
+    "AtLocation": [
+      "town",
+      "valley",
+      "city"
+    ],
+    "PartOf": [
+      "flat",
+      "long",
+      "narrow"
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "way",
+      "wide path",
+      "paved surface",
+      "place where vehicles travel"
+    ]
+  },
+  "lane": {
+    "AtLocation": [
+      "street",
+      "road",
+      "highway",
+      "city",
+      "village",
+      "town"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "small road",
+      "path",
+      "way",
+      "street",
+      "section of the road"
+    ]
+  },
+  "crosswalk": {
+    "AtLocation": [
+      "street",
+      "city street",
+      "street corner",
+      "corner of two streets"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "zebra crossing"
+    ]
+  },
+  "intersection": {
+    "AtLocation": [
+      "road",
+      "city",
+      "street corner",
+      "corner of two streets",
+      "city street",
+      "a fork in the road"
+    ],
+    "PartOf": [
+      "road"
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "point",
+      "where two roads meet"
+    ]
+  },
+  "vehicle": {
+    "AtLocation": [
+      "street",
+      "freeway"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "conveyance",
+      "truck",
+      "car",
+      "van",
+      "bicycle"
+    ]
+  },
+  "parking lot": {
+    "AtLocation": [
+      "city",
+      "shopping mall",
+      "shopping center",
+      "mall",
+      "urban area",
+      "hotel",
+      "town"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "lot",
+      "car park",
+      "place to park your vehicle"
+    ]
+  },
+  "railway": {
+    "AtLocation": [
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "line",
+      "transportation infrastructure"
+    ]
+  },
+  "bridge": {
+    "AtLocation": [
+      "river",
+      "town over a river",
+      "city"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "structure",
+      "transport facility",
+      "overpass"
+    ]
+  },
+  "barrier": {
+    "AtLocation": [
+      "street",
+      "freeway",
+      "roadblock"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "road infrastructure",
+      "fence",
+      "traffic cone barrier",
+      "construction barrier"
+    ]
+  },
+  "tree": {
+    "AtLocation": [
+      "town",
+      "sidewalk"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "plant"
+    ]
+  },
+  "animal": {
+    "AtLocation": [
+      "road",
+      "sidewalk",
+      "crosswalk"
+    ],
+    "PartOf": [
+    ],
+    "HasProperty": [
+    ],
+    "IsA": [
+      "dog",
+      "cat",
+      "deer",
+      "horse",
+      "cow",
+      "livestock",
+      "pet"
+    ]
+  }
+
+
+}
