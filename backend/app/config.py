@@ -9,7 +9,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 #Model paths
 MODEL_DIR = BASE_DIR / "models"
 YOLOE_PATH = MODEL_DIR / "yoloe-26m-seg.pt"
-YOLOWORLD_PATH = MODEL_DIR / "yolov8m-worldv2.pt"
 
 #Data paths
 DATA_DIR = BASE_DIR / "data"
@@ -32,3 +31,15 @@ EXTENDED_RERANK_CFG = {
     "alpha": 0.5,
     "low_conf_thr": 0.4
 }
+
+#Relation filtering
+DEFAULT_RELATIONS = {"isa","atlocation","hasproperty","partof"}
+USEFUL_RELATIONS = set(os.getenv("USEFUL_RELATIONS", DEFAULT_RELATIONS).split(","))
+
+VIDEO_CONF = os.getenv("VIDEO_CODEC", "mp4v") 
+
+# Temp
+TEMP_DIR = BASE_DIR / "temp"
+TEMP_DIR.mkdir(exist_ok=True)
+
+TARGET_CLASSES = list(os.getenv("TARGET_CLASS"))

@@ -1,2 +1,6 @@
 python-dotenv
 numpy
+opencv-python
+ultralytics
+pandas
+fastapi[standard]
