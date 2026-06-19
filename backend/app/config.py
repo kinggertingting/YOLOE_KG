@@ -42,4 +42,14 @@ VIDEO_CONF = os.getenv("VIDEO_CODEC", "mp4v")
 TEMP_DIR = BASE_DIR / "temp"
 TEMP_DIR.mkdir(exist_ok=True)
 
-TARGET_CLASSES = list(os.getenv("TARGET_CLASS"))
+TARGET_CLASSES_STR = os.getenv("TARGET_CLASSES", "")
+if TARGET_CLASSES_STR:
+    TARGET_CLASSES = [x.strip() for x in TARGET_CLASSES_STR.split(",")]
+else:
+    TARGET_CLASSES = [
+        'person', 'rider', 'car', 'bus', 'truck', 'bike', 'motor', 
+        'traffic light', 'traffic sign', 'train', 
+        'pedestrian', 'cyclist', 'van', 'road', 'lane', 
+        'crosswalk', 'intersection', 'vehicle', 'parking lot', 
+        'railway', 'bridge', 'barrier', 'tree', 'animal'
+    ]

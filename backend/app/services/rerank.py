@@ -1,5 +1,5 @@
 from collections import defaultdict
-from app.config import EVAL_CONF, CONCEPT_RERANK_CFG, EXTENDED_RERANK_CFG
+from app.config import EVAL_CONF
 
 def extract_extended_scene(preds, class_concepts, conf_thr=EVAL_CONF):
     scene = defaultdict(float)

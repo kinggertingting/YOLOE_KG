@@ -1,8 +1,7 @@
 from ultralytics import YOLOE
-from app.config import YOLOE_PATH, YOLOWORLD_PATH, DEVICE, TARGET_CLASSES
+from app.config import YOLOE_PATH, TARGET_CLASSES
 
 _yoloe_model = None
-_yoloworld_model = None
 
 def load_yoloe(target_classes=None):
     global _yoloe_model
@@ -11,7 +10,6 @@ def load_yoloe(target_classes=None):
         if target_classes is None:
             target_classes = TARGET_CLASSES
         prompts = [c.replace("_", " ") for c in target_classes]
-        # set_classes an toàn
         try:
             _yoloe_model.set_classes(prompts, _yoloe_model.get_text_pe(prompts))
         except:

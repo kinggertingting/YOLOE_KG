@@ -22,7 +22,7 @@ def init():
         concepts = get_concept_data(TARGET_CLASSES)
 
 @router.post('/detect-video')
-async def detect_video(file: UploadFile = File(...), rerank: str = None):
+async def detect_video(file: UploadFile = File(...)):
     init()
 
     temp_input = TEMP_DIR / f'upload_{file.filename}'

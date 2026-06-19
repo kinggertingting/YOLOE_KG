@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 from pathlib import Path
 from app.config import DEVICE, IMGSZ, CONF_THRESHOLD, TEMP_DIR, EVAL_CONF, VIDEO_CONF
-from app.services.rerank import rerank_tfidf, rerank_extended
+from app.services.rerank import rerank_extended
 import logging 
 
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ def process_video_extended(input_video_path: Path, model, target_classes, extend
                     })
 
         if extended_concepts is not None and extended_idf is not None:
-            preds = rerank_tfidf(preds, extended_concepts, extended_idf)
+            preds = rerank_extended(preds, extended_concepts, extended_idf)
 
         for p in preds:
             if p['confidence'] < 0.25:
