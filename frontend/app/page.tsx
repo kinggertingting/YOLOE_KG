@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Header } from '@/components/layout/Header';
 import { VideoUpload } from '@/components/upload/VideoUpload';
@@ -13,6 +13,7 @@ import { MetricsGrid } from '@/components/metrics/MetricsGrid';
 import { PerformanceCharts } from '@/components/metrics/PerformanceCharts';
 import { DetectionTable } from '@/components/metrics/DetectionTable';
 import { DownloadSection } from '@/components/download/DownloadSection';
+import { uploadAndDetectVideo } from '@/lib/api';
 import { mockDetectionResults } from '@/lib/mockData';
 
 type PageState = 'idle' | 'loading' | 'results';
@@ -20,6 +21,7 @@ type PageState = 'idle' | 'loading' | 'results';
 export default function DashboardPage() {
   const [pageState, setPageState] = useState<PageState>('idle');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [originalVideoUrl, setOriginalVideoUrl] = useState<string>('');
   const [config, setConfig] = useState<ConfigState>({
     detectionMode: 'both',
     confidenceThreshold: 0.5,
@@ -28,9 +30,27 @@ export default function DashboardPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(45);
   const [jobId, setJobId] = useState('');
+  const [outputVideoUrl, setOutputVideoUrl] = useState<string>('');
+  const [outputFilename, setOutputFilename] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const progressAnimRef = useRef<number>(0);
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
 
   const handleFileSelect = (file: File) => {
+    if (originalVideoUrl) {
+      URL.revokeObjectURL(originalVideoUrl);
+    }
+    const url = URL.createObjectURL(file);
     setSelectedFile(file);
+    setOriginalVideoUrl(url);
+    setError('');
+
+    // Force video element to load after state update
+    setTimeout(() => {
+      if (videoPreviewRef.current) {
+        videoPreviewRef.current.load();
+      }
+    }, 100);
   };
 
   const handleConfigChange = (newConfig: ConfigState) => {
@@ -45,47 +65,63 @@ export default function DashboardPage() {
     setProgress(0);
     setCurrentStep(1);
     setEstimatedTimeRemaining(45);
+    setError('');
 
-    // Simulate processing steps
-    const steps = 5;
-    const totalDuration = 3000; // 3 seconds for demo
+    // Start progress animation
     const startTime = Date.now();
+    const totalDuration = 30000;
 
-    const updateProgress = () => {
+    const animateProgress = () => {
       const elapsed = Date.now() - startTime;
-      const newProgress = Math.min((elapsed / totalDuration) * 100, 99);
+      const newProgress = Math.min((elapsed / totalDuration) * 100, 90);
       setProgress(newProgress);
-
-      // Update step based on progress
-      const newStep = Math.floor((newProgress / 100) * steps) + 1;
-      setCurrentStep(Math.min(newStep, steps));
-
-      // Update estimated time
-      const estimatedTotal = totalDuration / (elapsed / totalDuration || 1);
-      setEstimatedTimeRemaining(Math.max(0, Math.ceil((estimatedTotal - elapsed) / 1000)));
-
-      if (newProgress < 99) {
-        requestAnimationFrame(updateProgress);
-      } else {
-        // Processing complete
-        setTimeout(() => {
-          setProgress(100);
-          setCurrentStep(5);
-          setEstimatedTimeRemaining(0);
-          setPageState('results');
-        }, 500);
+      const newStep = Math.floor((newProgress / 100) * 5) + 1;
+      setCurrentStep(Math.min(newStep, 5));
+      const remaining = Math.max(0, Math.ceil((totalDuration - elapsed) / 1000));
+      setEstimatedTimeRemaining(remaining);
+      if (newProgress < 90) {
+        progressAnimRef.current = requestAnimationFrame(animateProgress);
       }
     };
+    progressAnimRef.current = requestAnimationFrame(animateProgress);
 
-    updateProgress();
+    try {
+      const result = await uploadAndDetectVideo(selectedFile, {
+        detectionMode: config.detectionMode,
+        confidenceThreshold: config.confidenceThreshold,
+      });
+
+      if (outputVideoUrl) URL.revokeObjectURL(outputVideoUrl);
+
+      const videoUrl = URL.createObjectURL(result.blob);
+      setOutputVideoUrl(videoUrl);
+      setOutputFilename(result.filename);
+
+      cancelAnimationFrame(progressAnimRef.current);
+      setProgress(100);
+      setCurrentStep(5);
+      setEstimatedTimeRemaining(0);
+      setPageState('results');
+    } catch (err: unknown) {
+      cancelAnimationFrame(progressAnimRef.current);
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMsg);
+      setPageState('idle');
+    }
   };
 
   const handleReset = () => {
+    if (outputVideoUrl) URL.revokeObjectURL(outputVideoUrl);
+    if (originalVideoUrl) URL.revokeObjectURL(originalVideoUrl);
     setPageState('idle');
     setSelectedFile(null);
+    setOriginalVideoUrl('');
     setProgress(0);
     setCurrentStep(1);
     setJobId('');
+    setOutputVideoUrl('');
+    setOutputFilename('');
+    setError('');
   };
 
   return (
@@ -95,18 +131,57 @@ export default function DashboardPage() {
       {pageState === 'idle' && (
         <div className="space-y-8">
           {!selectedFile && (
-            <VideoUpload
-              onFileSelect={handleFileSelect}
-            />
+            <VideoUpload onFileSelect={handleFileSelect} />
           )}
 
           {selectedFile && (
             <>
-              <VideoUpload
-                onFileSelect={handleFileSelect}
-              />
+              <VideoUpload onFileSelect={handleFileSelect} />
+
+              {/* Preview original video immediately */}
+              {originalVideoUrl && (
+                <div className="glass-strong rounded-lg p-6">
+                  <h2 className="text-lg font-semibold text-foreground mb-4">Video Preview</h2>
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      paddingTop: '56.25%',
+                      backgroundColor: '#000',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <video
+                      ref={videoPreviewRef}
+                      src={originalVideoUrl}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                      }}
+                      controls
+                      autoPlay
+                      muted
+                      playsInline
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">{selectedFile.name}</p>
+                </div>
+              )}
 
               <ConfigPanel config={config} onChange={handleConfigChange} />
+
+              {error && (
+                <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-4 text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
 
               <DetectionButton
                 isLoading={false}
@@ -136,19 +211,27 @@ export default function DashboardPage() {
             unseenClasses={mockDetectionResults.unseenClasses}
           />
 
-          <VideoComparison originalVideoName={selectedFile.name} />
+          <VideoComparison
+            originalVideoName={selectedFile.name}
+            originalVideoUrl={originalVideoUrl}
+            outputVideoUrl={outputVideoUrl}
+          />
 
           <MetricsGrid metrics={mockDetectionResults.metrics} />
 
           <PerformanceCharts
             performanceData={mockDetectionResults.performanceData}
             fpsData={mockDetectionResults.fpsData}
-            classDistribution={mockDetectionResults.classDistribution}
+            classDistribution={mockDetectionResults.classDistribution as { name: string; value: number; type: 'seen' | 'unseen' }[]}
           />
 
-          <DetectionTable detections={mockDetectionResults.detections} />
+          <DetectionTable detections={mockDetectionResults.detections as { id: number; frameId: number; class: string; type: 'seen' | 'unseen'; confidence: number; bbox: string; status: string }[]} />
 
-          <DownloadSection jobId={jobId} fileName={selectedFile.name} />
+          <DownloadSection
+            jobId={jobId}
+            fileName={outputFilename || selectedFile.name}
+            outputVideoUrl={outputVideoUrl}
+          />
 
           <div className="flex justify-center">
             <button

@@ -7,15 +7,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def process_video_extended(input_video_path: Path, model, target_classes, extended_concepts=None, extended_idf=None, imgs=IMGSZ, device=DEVICE):
-    cap = cv.videoCapture(str(input_video_path))
+def process_video_extended(input_video_path: Path, model, target_classes, extended_concepts=None, extended_idf=None, imgsz=IMGSZ, device=DEVICE):
+    cap = cv.VideoCapture(str(input_video_path))
     if not cap.isOpened():
         raise ValueError('Cannot open video file')
     
     width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv.CAP_PROP_FPS)
-    total_frames = cv.VideoWriter(cv.CAP_PROP_FRAME_COUNT)
+    total_frames = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
 
     output_path = TEMP_DIR / f'output_{input_video_path.stem}.mp4'
     fourcc = cv.VideoWriter_fourcc(*VIDEO_CONF)
@@ -27,9 +27,10 @@ def process_video_extended(input_video_path: Path, model, target_classes, extend
         if not ret:
             break
         frame_count += 1
-        logger.info(f'Processing frame {frame_count}/{total_frames}')
+        if frame_count % 30 == 0:
+            logger.info(f'Processing frame {frame_count}/{total_frames}')
 
-        results = model.predict(source=frame, conf=CONF_THRESHOLD, imgs=imgs, device=device, verbose=False)
+        results = model.predict(source=frame, conf=CONF_THRESHOLD, imgsz=imgsz, device=device, verbose=False)
         preds = []
         for r in results:
             if r.boxes is None:

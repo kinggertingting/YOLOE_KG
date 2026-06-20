@@ -1,8 +1,10 @@
-import { mockDetectionResults } from './mockData';
+import axios from 'axios';
 
-export interface UploadVideoRequest {
-  file: File;
-}
+const API_BASE_URL = 'http://localhost:8000/api/v1';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+});
 
 export interface ConfigParams {
   detectionMode: 'seen' | 'unseen' | 'both';
@@ -54,74 +56,56 @@ export interface DetectionResponse {
 }
 
 /**
- * Upload video file for detection processing
- * TODO: Connect to FastAPI backend endpoint POST /detect
+ * Upload video file for detection processing.
+ * Backend returns the processed video file directly via POST /detect-video.
+ * Returns the response blob and the filename from Content-Disposition header.
  */
 export async function uploadAndDetectVideo(
   file: File,
-  config: ConfigParams
-): Promise<DetectionResponse> {
+  _config: ConfigParams
+): Promise<{ blob: Blob; filename: string }> {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('detectionMode', config.detectionMode);
-  formData.append('confidenceThreshold', config.confidenceThreshold.toString());
 
-  // TODO: Replace with actual API call
-  // const response = await fetch('/api/detect', {
-  //   method: 'POST',
-  //   body: formData,
-  // });
-  // return response.json();
-
-  // Mock implementation - simulates processing
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        jobId: `job_${Date.now()}`,
-        status: 'processing',
-      });
-    }, 500);
+  const response = await api.post('/detect-video', formData, {
+    responseType: 'blob',
+    timeout: 300000, // 5 minutes for long video processing
+    validateStatus: () => true, // handle status manually
   });
+
+  // Check if response is not OK
+  if (response.status >= 400) {
+    let errorMessage = `Backend error (${response.status})`;
+    try {
+      // Try to parse error from blob response
+      const errorText = await (response.data as Blob).text();
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.detail || errorMessage;
+    } catch {
+      // ignore parse error
+    }
+    throw new Error(errorMessage);
+  }
+
+  // Extract filename from Content-Disposition header
+  const disposition = response.headers['content-disposition'];
+  let filename = `detected_${file.name}`;
+  if (disposition) {
+    const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    if (match) {
+      filename = match[1].replace(/['"]/g, '');
+    }
+  }
+
+  return { blob: response.data as Blob, filename };
 }
 
 /**
- * Get detection results for a specific job
- * TODO: Connect to FastAPI backend endpoint GET /result/{job_id}
- */
-export async function getDetectionResults(jobId: string): Promise<DetectionResponse> {
-  // TODO: Replace with actual API call
-  // const response = await fetch(`/api/result/${jobId}`);
-  // return response.json();
-
-  // Mock implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockDetectionResults);
-    }, 2000);
-  });
-}
-
-/**
- * Get processed video file
- * TODO: Connect to FastAPI backend endpoint GET /video/{job_id}
+ * Get processed video as blob (for download / display).
  */
 export async function getProcessedVideo(jobId: string): Promise<Blob> {
-  // TODO: Replace with actual API call
-  // const response = await fetch(`/api/video/${jobId}`);
-  // return response.blob();
-
-  throw new Error('Video download not yet implemented');
-}
-
-/**
- * Get metrics data for a job
- * TODO: Connect to FastAPI backend endpoint GET /metrics/{job_id}
- */
-export async function getMetricsData(jobId: string) {
-  // TODO: Replace with actual API call
-  // const response = await fetch(`/api/metrics/${jobId}`);
-  // return response.json();
-
-  // Mock implementation
-  return mockDetectionResults.metrics;
+  const response = await api.get(`/video/${jobId}`, {
+    responseType: 'blob',
+  });
+  return response.data as Blob;
 }

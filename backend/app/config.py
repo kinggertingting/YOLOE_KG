@@ -15,7 +15,9 @@ DATA_DIR = BASE_DIR / "data"
 KG_PATH = DATA_DIR / "KG.json"
 
 #Params
-DEVICE = int(os.getenv("DEVICE", 0))
+DEVICE = os.getenv("DEVICE", "cpu")
+if DEVICE != "cpu":
+    DEVICE = int(DEVICE)
 IMGSZ = int(os.getenv("IMGSZ", 640))
 CONF_THRESHOLD = float(os.getenv("CONF_THRESHOLD", 0.03))
 EVAL_CONF = 0.25
@@ -33,10 +35,10 @@ EXTENDED_RERANK_CFG = {
 }
 
 #Relation filtering
-DEFAULT_RELATIONS = {"isa","atlocation","hasproperty","partof"}
+DEFAULT_RELATIONS = "isa,atlocation,hasproperty,partof"
 USEFUL_RELATIONS = set(os.getenv("USEFUL_RELATIONS", DEFAULT_RELATIONS).split(","))
 
-VIDEO_CONF = os.getenv("VIDEO_CODEC", "mp4v") 
+VIDEO_CONF = os.getenv("VIDEO_CODEC", "avc1") 
 
 # Temp
 TEMP_DIR = BASE_DIR / "temp"

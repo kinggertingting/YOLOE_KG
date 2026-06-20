@@ -37,7 +37,7 @@ async def detect_video(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail='Unsupported video format, only .mp4, .avi, .mov, .mkv')
     
     try:
-        ext_concepts, ext_idf = concepts
+        _, _, ext_concepts, ext_idf = concepts
         output_path = process_video_extended(input_video_path=temp_input, model=model, target_classes=TARGET_CLASSES, extended_concepts=ext_concepts, extended_idf=ext_idf)
         temp_input.unlink(missing_ok=True)
 
