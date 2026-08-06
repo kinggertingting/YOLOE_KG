@@ -1,0 +1,4 @@
+# Caddy reverse proxy for backend
+yoloe.duckdns.org {
+    reverse_proxy backend:8000
+}

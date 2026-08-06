@@ -1,0 +1,214 @@
+name: Deploy Backend (GPU)
+
+on:
+  push:
+    branches:
+      - deployment
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/cnm-backend
+  REMOTE_APP_DIR: ${{ vars.EC2_BACKEND_DEPLOY_DIR || '~/cnm/deploy/backend' }}
+  HEALTHCHECK_URL: ${{ vars.BACKEND_HEALTHCHECK_URL }}
+
+jobs:
+  deploy:
+    name: Build, Push, and Deploy to EC2 (GPU instance)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Free up disk space
+        run: |
+          echo "=== Disk usage before cleanup ==="
+          df -h /
+          sudo docker system prune --all --force --volumes 2>/dev/null || true
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc 2>/dev/null || true
+          sudo apt-get clean 2>/dev/null || true
+          echo "=== Disk usage after cleanup ==="
+          df -h /
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Generate Docker image tags
+        id: meta
+        run: |
+          set -euo pipefail
+          IMAGE="${REGISTRY}/${IMAGE_NAME}"
+          SHORT_SHA="${GITHUB_SHA::12}"
+
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=${IMAGE}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "latest_tag=${IMAGE}:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Docker image (GPU base)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.sha_tag }}
+            ${{ steps.meta.outputs.latest_tag }}
+
+      - name: Configure SSH
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          cat > ~/.ssh/ec2_backend_key <<'EOF'
+          ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          EOF
+          sed -i 's/^[[:space:]]*//' ~/.ssh/ec2_backend_key
+          sed -i 's/\r$//' ~/.ssh/ec2_backend_key
+          chmod 600 ~/.ssh/ec2_backend_key
+
+          ssh-keyscan -T 10 -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Prepare deployment files
+        run: |
+          set -euo pipefail
+
+          cat > .env.deploy <<'EOF'
+          ${{ secrets.BACKEND_ENV_FILE }}
+          EOF
+          sed -i 's/^[[:space:]]*//' .env.deploy
+          sed -i 's/\r$//' .env.deploy
+          test -s .env.deploy
+
+          cp docker-compose.yml docker-compose.backend.yml
+          # Ensure Caddyfile exists
+          test -f Caddyfile || echo "# Empty Caddyfile" > Caddyfile
+
+      - name: Upload deployment files to EC2
+        env:
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          set -euo pipefail
+
+          scp -i ~/.ssh/ec2_backend_key docker-compose.backend.yml .env.deploy Caddyfile \
+            "${EC2_USER}@${EC2_HOST}:/tmp/"
+
+      - name: Deploy on EC2 (GPU)
+        env:
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DEPLOY_IMAGE: ${{ steps.meta.outputs.sha_tag }}
+        run: |
+          set -euo pipefail
+
+          ssh -i ~/.ssh/ec2_backend_key "${EC2_USER}@${EC2_HOST}" \
+            "REGISTRY='${REGISTRY}' \
+             DOCKER_USERNAME='${DOCKER_USERNAME}' \
+             DOCKER_PASSWORD='${DOCKER_PASSWORD}' \
+             DEPLOY_IMAGE='${DEPLOY_IMAGE}' \
+             REMOTE_APP_DIR='${REMOTE_APP_DIR}' \
+             HEALTHCHECK_URL='${HEALTHCHECK_URL}' \
+             bash -s" <<'REMOTE_SCRIPT'
+          set -euo pipefail
+
+          case "${REMOTE_APP_DIR}" in
+            "~") REMOTE_APP_DIR="${HOME}" ;;
+            "~/"*) REMOTE_APP_DIR="${HOME}/${REMOTE_APP_DIR:2}" ;;
+          esac
+
+          mkdir -p "${REMOTE_APP_DIR}"
+          mv /tmp/docker-compose.backend.yml "${REMOTE_APP_DIR}/docker-compose.backend.yml"
+          mv /tmp/.env.deploy "${REMOTE_APP_DIR}/.env"
+          chmod 600 "${REMOTE_APP_DIR}/.env"
+          # Replace existing Caddyfile directory (if any) with the actual file
+          rm -rf "${REMOTE_APP_DIR}/Caddyfile"
+          mv /tmp/Caddyfile "${REMOTE_APP_DIR}/Caddyfile"
+
+          cd "${REMOTE_APP_DIR}"
+
+          echo "${DOCKER_PASSWORD}" | docker login "${REGISTRY}" -u "${DOCKER_USERNAME}" --password-stdin >/dev/null
+
+          export BACKEND_IMAGE="${DEPLOY_IMAGE}"
+
+          # ===== GPU-specific changes =====
+          # Install nvidia-container-toolkit if not present (required for GPU support)
+          if ! command -v nvidia-ctk &>/dev/null; then
+            echo "Installing nvidia-container-toolkit..."
+            distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
+              && curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
+                 sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+              && curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
+                 sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+                 sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list \
+              && sudo apt-get update -y \
+              && sudo apt-get install -y nvidia-container-toolkit \
+              && sudo nvidia-ctk runtime configure --runtime=docker \
+              && sudo systemctl restart docker
+            echo "nvidia-container-toolkit installed and configured."
+          fi
+
+          docker compose --env-file .env -f docker-compose.backend.yml config --quiet
+          docker compose --env-file .env -f docker-compose.backend.yml pull backend caddy redis
+          docker compose --env-file .env -f docker-compose.backend.yml up -d --remove-orphans redis backend caddy
+
+          echo "Waiting for backend container to start..."
+          sleep 15
+          docker compose --env-file .env -f docker-compose.backend.yml ps
+
+          # Verify GPU is accessible inside the container
+          echo "Verifying GPU access inside container..."
+          GPU_CHECK=$(docker compose --env-file .env -f docker-compose.backend.yml exec -T backend \
+            python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}, Device count: {torch.cuda.device_count()}')" 2>/dev/null || echo "GPU check failed")
+          echo "GPU check result: ${GPU_CHECK}"
+
+          if [ -n "${HEALTHCHECK_URL}" ]; then
+            echo "Checking backend health: ${HEALTHCHECK_URL}"
+            for i in $(seq 1 30); do
+              if curl -fsS "${HEALTHCHECK_URL}" >/dev/null; then
+                echo "Backend health check passed."
+                exit 0
+              fi
+              sleep 2
+            done
+
+            echo "Backend health check failed." >&2
+            docker compose --env-file .env -f docker-compose.backend.yml logs --tail=200 backend >&2
+            exit 1
+          fi
+
+          echo "No BACKEND_HEALTHCHECK_URL configured; skipping HTTP health check."
+          REMOTE_SCRIPT
+
+      - name: Notify Slack on failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SLACK_WEBHOOK_URL}" ]; then
+            echo "No SLACK_WEBHOOK_URL configured; skipping failure notification."
+            exit 0
+          fi
+
+          curl -fsS -X POST \
+            -H "Content-Type: application/json" \
+            --data "{\"text\":\"Backend GPU deployment failed for ${GITHUB_REPOSITORY}@${GITHUB_SHA}. Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\"}" \
+            "${SLACK_WEBHOOK_URL}" >/dev/null

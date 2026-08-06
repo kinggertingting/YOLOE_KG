@@ -6,19 +6,28 @@ import { useState } from 'react';
 interface DownloadSectionProps {
   jobId: string;
   fileName: string;
+  outputVideoUrl?: string;
 }
 
-export function DownloadSection({ jobId, fileName }: DownloadSectionProps) {
+export function DownloadSection({ jobId, fileName, outputVideoUrl }: DownloadSectionProps) {
   const [downloadingVideo, setDownloadingVideo] = useState(false);
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [downloadingCsv, setDownloadingCsv] = useState(false);
 
   const handleDownloadVideo = async () => {
+    if (!outputVideoUrl) return;
     setDownloadingVideo(true);
     try {
-      // TODO: Replace with actual video download
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      alert('Download started: ' + fileName.replace(/\.[^.]+$/, '_detected.mp4'));
+      const response = await fetch(outputVideoUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } finally {
       setDownloadingVideo(false);
     }

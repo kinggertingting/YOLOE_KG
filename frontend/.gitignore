@@ -1,0 +1,10 @@
+node_modules/
+.next/
+out/
+
+.env
+.env.local
+
+# Vercel will use npm (package-lock.json) instead of pnpm
+pnpm-lock.yaml
+yarn.lock

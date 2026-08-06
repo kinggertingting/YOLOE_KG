@@ -6,6 +6,7 @@ import { useState } from 'react';
 export interface ConfigState {
   detectionMode: 'seen' | 'unseen' | 'both';
   confidenceThreshold: number;
+  device: 'cpu' | 'cuda';
 }
 
 interface ConfigPanelProps {
@@ -24,6 +25,12 @@ export function ConfigPanel({ config, onChange }: ConfigPanelProps) {
 
   const handleThresholdChange = (value: number) => {
     const newConfig = { ...localConfig, confidenceThreshold: value };
+    setLocalConfig(newConfig);
+    onChange(newConfig);
+  };
+
+  const handleDeviceChange = (device: 'cpu' | 'cuda') => {
+    const newConfig = { ...localConfig, device };
     setLocalConfig(newConfig);
     onChange(newConfig);
   };
@@ -60,6 +67,51 @@ export function ConfigPanel({ config, onChange }: ConfigPanelProps) {
                 </span>
               </label>
             ))}
+          </div>
+        </div>
+
+        {/* Device Selection */}
+        <div>
+          <label className="block text-sm font-medium text-muted-foreground mb-3">
+            Inference Device
+          </label>
+          <div className="space-y-2">
+            <label
+              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                localConfig.device === 'cuda' ? 'bg-purple-500/20 border border-purple-500/40' : 'hover:bg-white/5'
+              }`}
+            >
+              <input
+                type="radio"
+                name="device"
+                value="cuda"
+                checked={localConfig.device === 'cuda'}
+                onChange={() => handleDeviceChange('cuda')}
+                className="h-4 w-4 accent-purple-500"
+              />
+              <div>
+                <span className="text-sm text-foreground font-medium">GPU (CUDA)</span>
+                <p className="text-xs text-muted-foreground mt-0.5">NVIDIA GPU – fastest inference</p>
+              </div>
+            </label>
+            <label
+              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                localConfig.device === 'cpu' ? 'bg-blue-500/20 border border-blue-500/40' : 'hover:bg-white/5'
+              }`}
+            >
+              <input
+                type="radio"
+                name="device"
+                value="cpu"
+                checked={localConfig.device === 'cpu'}
+                onChange={() => handleDeviceChange('cpu')}
+                className="h-4 w-4 accent-blue-500"
+              />
+              <div>
+                <span className="text-sm text-foreground font-medium">CPU</span>
+                <p className="text-xs text-muted-foreground mt-0.5">Fallback when no GPU available</p>
+              </div>
+            </label>
           </div>
         </div>
 

@@ -1,12 +1,31 @@
-import { mockDetectionResults } from './mockData';
+import axios from 'axios';
 
-export interface UploadVideoRequest {
-  file: File;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+});
+
+function getApiOrigin(): string {
+  return new URL(API_BASE_URL, window.location.origin).origin;
 }
 
-export interface ConfigParams {
-  detectionMode: 'seen' | 'unseen' | 'both';
-  confidenceThreshold: number;
+function normalizeVideoUrl(videoUrl: string): string {
+  const apiOrigin = getApiOrigin();
+  const parsedUrl = new URL(videoUrl, apiOrigin);
+  const parsedApiOrigin = new URL(apiOrigin);
+
+  const shouldUseApiOrigin =
+    parsedUrl.hostname === parsedApiOrigin.hostname ||
+    ['localhost', '127.0.0.1', '0.0.0.0'].includes(parsedUrl.hostname);
+
+  if (shouldUseApiOrigin) {
+    parsedUrl.protocol = parsedApiOrigin.protocol;
+    parsedUrl.hostname = parsedApiOrigin.hostname;
+    parsedUrl.port = parsedApiOrigin.port;
+  }
+
+  return parsedUrl.href;
 }
 
 export interface DetectionResponse {
@@ -53,75 +72,49 @@ export interface DetectionResponse {
   }>;
 }
 
+/** Response from POST /api/v1/detect-video */
+export interface DetectVideoResult {
+  video_url: string;      // Absolute public URL, e.g. https://yoloe.duckdns.org/uploads/detected_xxx.mp4
+  filename: string;
+  jobId: string;
+}
+
 /**
- * Upload video file for detection processing
- * TODO: Connect to FastAPI backend endpoint POST /detect
+ * Upload video file for detection processing.
+ * Backend processes the video and returns a JSON with video_url
+ * pointing to the processed file served via StaticFiles at /uploads.
+ * 
+ * The returned video_url can be used directly in a <video> tag:
+ *   <video src={result.video_url} controls />
  */
 export async function uploadAndDetectVideo(
-  file: File,
-  config: ConfigParams
-): Promise<DetectionResponse> {
+  file: File
+): Promise<DetectVideoResult> {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('detectionMode', config.detectionMode);
-  formData.append('confidenceThreshold', config.confidenceThreshold.toString());
+  formData.append('device', 'cuda');
 
-  // TODO: Replace with actual API call
-  // const response = await fetch('/api/detect', {
-  //   method: 'POST',
-  //   body: formData,
-  // });
-  // return response.json();
-
-  // Mock implementation - simulates processing
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        jobId: `job_${Date.now()}`,
-        status: 'processing',
-      });
-    }, 500);
+  const response = await api.post('/api/v1/detect-video', formData, {
+    timeout: 300000,
+    validateStatus: () => true,
   });
-}
 
-/**
- * Get detection results for a specific job
- * TODO: Connect to FastAPI backend endpoint GET /result/{job_id}
- */
-export async function getDetectionResults(jobId: string): Promise<DetectionResponse> {
-  // TODO: Replace with actual API call
-  // const response = await fetch(`/api/result/${jobId}`);
-  // return response.json();
+  // Check if response is not OK
+  if (response.status >= 400) {
+    let errorMessage = `Backend error (${response.status})`;
+    try {
+      const errorJson = response.data;
+      errorMessage = errorJson.detail || errorMessage;
+    } catch {
+      // ignore parse error
+    }
+    throw new Error(errorMessage);
+  }
 
-  // Mock implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockDetectionResults);
-    }, 2000);
-  });
-}
+  const result = response.data as DetectVideoResult;
 
-/**
- * Get processed video file
- * TODO: Connect to FastAPI backend endpoint GET /video/{job_id}
- */
-export async function getProcessedVideo(jobId: string): Promise<Blob> {
-  // TODO: Replace with actual API call
-  // const response = await fetch(`/api/video/${jobId}`);
-  // return response.blob();
-
-  throw new Error('Video download not yet implemented');
-}
-
-/**
- * Get metrics data for a job
- * TODO: Connect to FastAPI backend endpoint GET /metrics/{job_id}
- */
-export async function getMetricsData(jobId: string) {
-  // TODO: Replace with actual API call
-  // const response = await fetch(`/api/metrics/${jobId}`);
-  // return response.json();
-
-  // Mock implementation
-  return mockDetectionResults.metrics;
+  return {
+    ...result,
+    video_url: normalizeVideoUrl(result.video_url),
+  };
 }

@@ -1,2 +1,7 @@
 python-dotenv
 numpy
+opencv-python
+torch>=2.6.0
+ultralytics
+transformers
+fastapi[standard]
