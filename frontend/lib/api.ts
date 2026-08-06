@@ -1,14 +1,31 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-export interface ConfigParams {
-  detectionMode: 'seen' | 'unseen' | 'both';
-  confidenceThreshold: number;
+function getApiOrigin(): string {
+  return new URL(API_BASE_URL, window.location.origin).origin;
+}
+
+function normalizeVideoUrl(videoUrl: string): string {
+  const apiOrigin = getApiOrigin();
+  const parsedUrl = new URL(videoUrl, apiOrigin);
+  const parsedApiOrigin = new URL(apiOrigin);
+
+  const shouldUseApiOrigin =
+    parsedUrl.hostname === parsedApiOrigin.hostname ||
+    ['localhost', '127.0.0.1', '0.0.0.0'].includes(parsedUrl.hostname);
+
+  if (shouldUseApiOrigin) {
+    parsedUrl.protocol = parsedApiOrigin.protocol;
+    parsedUrl.hostname = parsedApiOrigin.hostname;
+    parsedUrl.port = parsedApiOrigin.port;
+  }
+
+  return parsedUrl.href;
 }
 
 export interface DetectionResponse {
@@ -55,31 +72,38 @@ export interface DetectionResponse {
   }>;
 }
 
+/** Response from POST /api/v1/detect-video */
+export interface DetectVideoResult {
+  video_url: string;      // Absolute public URL, e.g. https://yoloe.duckdns.org/uploads/detected_xxx.mp4
+  filename: string;
+  jobId: string;
+}
+
 /**
  * Upload video file for detection processing.
- * Backend returns the processed video file directly via POST /detect-video.
- * Returns the response blob and the filename from Content-Disposition header.
+ * Backend processes the video and returns a JSON with video_url
+ * pointing to the processed file served via StaticFiles at /uploads.
+ * 
+ * The returned video_url can be used directly in a <video> tag:
+ *   <video src={result.video_url} controls />
  */
 export async function uploadAndDetectVideo(
-  file: File,
-  _config: ConfigParams
-): Promise<{ blob: Blob; filename: string }> {
+  file: File
+): Promise<DetectVideoResult> {
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('device', 'cuda');
 
-  const response = await api.post('/detect-video', formData, {
-    responseType: 'blob',
-    timeout: 300000, // 5 minutes for long video processing
-    validateStatus: () => true, // handle status manually
+  const response = await api.post('/api/v1/detect-video', formData, {
+    timeout: 300000,
+    validateStatus: () => true,
   });
 
   // Check if response is not OK
   if (response.status >= 400) {
     let errorMessage = `Backend error (${response.status})`;
     try {
-      // Try to parse error from blob response
-      const errorText = await (response.data as Blob).text();
-      const errorJson = JSON.parse(errorText);
+      const errorJson = response.data;
       errorMessage = errorJson.detail || errorMessage;
     } catch {
       // ignore parse error
@@ -87,25 +111,10 @@ export async function uploadAndDetectVideo(
     throw new Error(errorMessage);
   }
 
-  // Extract filename from Content-Disposition header
-  const disposition = response.headers['content-disposition'];
-  let filename = `detected_${file.name}`;
-  if (disposition) {
-    const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-    if (match) {
-      filename = match[1].replace(/['"]/g, '');
-    }
-  }
+  const result = response.data as DetectVideoResult;
 
-  return { blob: response.data as Blob, filename };
-}
-
-/**
- * Get processed video as blob (for download / display).
- */
-export async function getProcessedVideo(jobId: string): Promise<Blob> {
-  const response = await api.get(`/video/${jobId}`, {
-    responseType: 'blob',
-  });
-  return response.data as Blob;
+  return {
+    ...result,
+    video_url: normalizeVideoUrl(result.video_url),
+  };
 }
