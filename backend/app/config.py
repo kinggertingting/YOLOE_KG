@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import torch
 
 load_dotenv()
 
@@ -16,17 +17,26 @@ DATA_DIR = BASE_DIR / "data"
 KG_PATH = DATA_DIR / "KG.json"
 
 #Params
-DEVICE = os.getenv("DEVICE", "0")
-if DEVICE != "cpu":
-    DEVICE = int(DEVICE)
+device_env = os.getenv("DEVICE", "auto").lower()
+
+if device_env == "cpu":
+    DEVICE = "cpu"
+
+elif device_env == "auto":
+    DEVICE = 0 if torch.cuda.is_available() else "cpu"
+
+else:
+    DEVICE = int(device_env)
+
 IMGSZ = int(os.getenv("IMGSZ", 640))
 CONF_THRESHOLD = float(os.getenv("CONF_THRESHOLD", 0.03))
 EVAL_CONF = 0.25
 IOU_THR = 0.50
 
 #Alpha
-ALPHA=0.2
-LOW_CONF_THR=0.25
+ALPHA=0.75
+LOW_CONF_THR=0.3
+IOU_NMS=0.7
 
 #Relation filtering
 DEFAULT_RELATIONS = "isa,atlocation"
