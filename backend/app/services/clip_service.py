@@ -47,7 +47,7 @@ class ClipService:
 
     @torch.no_grad()
     def build_text_features(self, prompts):
-        self.prompts = prompts
+        self.prompts = list(dict.fromkeys(prompts))
 
         text_inputs = self.clip_processor(
             text=prompts,

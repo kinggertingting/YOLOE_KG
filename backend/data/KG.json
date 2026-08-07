@@ -8,18 +8,6 @@
       "corner of two streets",
       "entrance hall"
     ],
-    "PartOf": [
-       "arm",
-        "hand",
-        "leg",
-        "ear",
-        "chest"
-    ],
-    "HasProperty": [
-      "standing straight",
-      "facing in any direction",
-      "standing in line"
-    ],
     "IsA": [
       "human",
       "pedestrian"
@@ -31,12 +19,6 @@
       "street",
       "highway",
       "park"
-    ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-      "fast",
-      "large"
     ],
     "IsA": [
       "person",
@@ -56,22 +38,6 @@
       "corner of two streets",
       "driveway"
     ],
-    "PartOf": [
-      "tire",
-      "wheel",
-      "bumper",
-      "car door",
-      "windshield",
-      "hood",
-      "trunk"
-    ],
-    "HasProperty": [
-       "red",
-        "blue",
-        "green",
-        "shiny",
-        "opaque"
-    ],
     "IsA": [
       "vehicle",
       "motor vehicle",
@@ -88,10 +54,6 @@
       "bus terminal",
       "city"
     ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "form of public transportation",
       "car",
@@ -103,13 +65,6 @@
       "road",
       "street",
       "freeway"
-    ],
-    "PartOf": [
-      "roof",
-      "bumper",
-      "tailgate"
-    ],
-    "HasProperty": [
     ],
     "IsA": [
       "vehicle",
@@ -125,11 +80,6 @@
       "sidewalk",
       "park"
     ],
-    "PartOf": [
-      "sprocket"
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "bicycle"
     ]
@@ -140,10 +90,6 @@
       "street",
       "freeway"
     ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "vehicle"
     ]
@@ -153,12 +99,7 @@
         "street",
         "corner of two streets"
     ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
-        "light",
         "red light",
         "green light",
         "yellow light"
@@ -171,10 +112,6 @@
       "freeway",
       "a fork in the road"
     ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "Sign"
     ]
@@ -183,11 +120,6 @@
     "AtLocation": [
       "station",
       "track"
-    ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-        "carriage"
     ],
     "IsA": [
       "public transport"
@@ -199,10 +131,6 @@
       "street",
       "street corner"
     ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "person",
       "human",
@@ -213,10 +141,6 @@
     "AtLocation": [
       "street"
     ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "pedaler",
       "athlete"
@@ -226,10 +150,6 @@
     "AtLocation": [
       "street"
 
-    ],
-    "PartOf": [
-    ],
-    "HasProperty": [
     ],
     "IsA": [
       "car",
@@ -243,13 +163,6 @@
       "town",
       "valley",
       "city"
-    ],
-    "PartOf": [
-      "flat",
-      "long",
-      "narrow"
-    ],
-    "HasProperty": [
     ],
     "IsA": [
       "way",
@@ -267,10 +180,6 @@
       "village",
       "town"
     ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "small road",
       "path",
@@ -286,10 +195,6 @@
       "street corner",
       "corner of two streets"
     ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "zebra crossing"
     ]
@@ -303,11 +208,6 @@
       "city street",
       "a fork in the road"
     ],
-    "PartOf": [
-      "road"
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "point",
       "where two roads meet"
@@ -317,10 +217,6 @@
     "AtLocation": [
       "street",
       "freeway"
-    ],
-    "PartOf": [
-    ],
-    "HasProperty": [
     ],
     "IsA": [
       "conveyance",
@@ -340,10 +236,6 @@
       "hotel",
       "town"
     ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "lot",
       "car park",
@@ -352,10 +244,6 @@
   },
   "railway": {
     "AtLocation": [
-    ],
-    "PartOf": [
-    ],
-    "HasProperty": [
     ],
     "IsA": [
       "line",
@@ -367,10 +255,6 @@
       "river",
       "town over a river",
       "city"
-    ],
-    "PartOf": [
-    ],
-    "HasProperty": [
     ],
     "IsA": [
       "structure",
@@ -384,10 +268,6 @@
       "freeway",
       "roadblock"
     ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "road infrastructure",
       "fence",
@@ -400,10 +280,6 @@
       "town",
       "sidewalk"
     ],
-    "PartOf": [
-    ],
-    "HasProperty": [
-    ],
     "IsA": [
       "plant"
     ]
@@ -413,10 +289,6 @@
       "road",
       "sidewalk",
       "crosswalk"
-    ],
-    "PartOf": [
-    ],
-    "HasProperty": [
     ],
     "IsA": [
       "dog",

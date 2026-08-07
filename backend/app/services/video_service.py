@@ -14,11 +14,12 @@ logger = logging.getLogger(__name__)
 
 class VideoService:
 
-    def __init__(self, detector, kg_service, clip_service, fusion_service ):
+    def __init__(self, detector, kg_service, clip_service, fusion_service, nms_service):
         self.detector = detector
         self.kg = kg_service
         self.clip = clip_service
         self.fusion = fusion_service
+        self.nms = nms_service
 
         self.prompt_map, self.all_prompts = (
             self.kg.get_prompt_map()
@@ -62,13 +63,13 @@ class VideoService:
                     f"Processing frame "
                     f"{frame_idx}/{total_frames}"
                 )
-
+            #Bước 1
             preds = self.detector.predict(
                 frame,
                 conf=conf,
                 imgsz=imgsz,
             )
-
+            #Bước 2,3
             prompt_scores = (
                 self.clip.calculate_scene_score(
                     frame
@@ -82,10 +83,14 @@ class VideoService:
                 )
             )
 
+            #Bước 4
             preds = self.fusion.rerank(
                 preds,
                 class_prior,
             )
+
+            #Bước 5
+            preds = self.nms.apply(preds)
 
             self.draw_predictions(
                 frame,

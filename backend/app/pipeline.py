@@ -3,6 +3,7 @@ from threading import Lock
 
 from app.config import TARGET_CLASSES
 
+from app.services.nms_service import NMSService
 from app.services.yoloe_service import YOLOEDetector
 from app.services.kg_service import KG_Service
 from app.services.clip_service import ClipService
@@ -40,11 +41,16 @@ class DetectionPipeline:
 
         self.fusion = FusionService()
 
+        self.nms = NMSService(
+            iou_threshold=0.7
+        )
+        
         self.video_service = VideoService(
             detector=self.detector,
             kg_service=self.kg,
             clip_service=self.clip,
             fusion_service=self.fusion,
+            nms_service=self.nms
         )
 
         logger.info("Pipeline loaded successfully.")

@@ -22,7 +22,7 @@ class FusionService:
             if conf >= self.low_conf_thr:
                 continue
 
-            fused = (self.alpha * conf + (1 - self.alpha) * prior)
+            fused = (conf**self.alpha)* ( prior**(1 - self.alpha))
 
             if fused > conf:
                 pred["conf"] = min(fused, 1.0)
