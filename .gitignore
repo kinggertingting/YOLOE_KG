@@ -7,7 +7,7 @@ dist/
 .nuxt/
 .cache/
 
-# Logs và các file tạm thời
+# Logs and temporary files
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -15,21 +15,25 @@ yarn-error.log*
 .pnpm-debug.log*
 lerna-debug.log*
 
-# File cấu hình môi trường
+# Environment files (Allow .env.example)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 .env.*.local
+.env.development
+.env.production
+!.env.example
+!.env*.example
 
-# Cache của các công cụ build
+# Build tools cache
 .eslintcache
 .stylelintcache
 .tsbuildinfo
 *.tsbuildinfo
 
-# Thư mục của các trình soạn thảo
+# IDE / Editor
 .vscode/
 .idea/
 *.swp
@@ -40,14 +44,15 @@ lerna-debug.log*
 # Byte-compiled / cache
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
+*$py.class
+*.so
 .pytest_cache/
 .mypy_cache/
 .dmypy.json
 dmypy.json
 .pyre/
 .pytype/
+.ruff_cache/
 
 # Virtual environment
 venv/
@@ -59,7 +64,7 @@ pythonenv*
 .venv
 .virtualenv
 
-# Các file phân phối
+# Distribution / packages
 *.egg-info/
 *.egg
 dist/
@@ -74,19 +79,17 @@ wheels/
 *.manifest
 *.spec
 
-# Các file cơ sở dữ liệu nhẹ
+# Database files
 *.db
 *.sqlite
 *.sqlite3
 
-# File cấu hình môi trường Python
-.env
-.env.*
+# Certificates and keys
 *.pem
 *.key
 *.crt
 
-# Các file test / coverage
+# Test / coverage
 .coverage
 .coverage.*
 htmlcov/
@@ -95,30 +98,31 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
 
-# Jupyter Notebooks (nếu có)
+# Jupyter Notebooks
 .ipynb_checkpoints/
 *.ipynb
 
-# ========== YOLO / MACHINE LEARNING ==========
-# Trọng số model (có thể rất nặng)
+
+# ========== YOLO / MACHINE LEARNING / MODEL WEIGHTS ==========
+# Model weights & TorchScript / ONNX / Engine files
 *.pt
 *.pth
 *.onnx
 *.h5
 *.pb
 *.tflite
-*.onnx
 *.engine
 *.mlmodel
 *.caffemodel
 *.prototxt
 *.weights
+mobileclip2_b.ts
+backend/mobileclip2_b.ts
+models/
+backend/models/
 
-# Các folder chứa dữ liệu thô / huấn luyện
+# Dataset and media data
 datasets/
 data/raw/
 data/processed/
@@ -136,51 +140,46 @@ data/videos/
 *.tiff
 *.bmp
 
-# Các file checkpoint huấn luyện
+# Preserve essential Knowledge Graph data file
+!backend/data/KG.json
+!data/KG.json
+
+# Checkpoints and runs
 checkpoints/
 runs/
 wandb/
 mlruns/
-*.log
 
-# ========== CHUNG / HỆ ĐIỀU HÀNH ==========
+# ========== SYSTEM / OS ==========
 .DS_Store
 Thumbs.db
 *.tmp
 *.bak
-*.swp
-*.swo
-*~
 desktop.ini
 
-# Các file nén / backup
+# Archives / Backups
 *.zip
 *.tar.gz
 *.rar
 *.7z
-*.bak
 *.old
 
 # ========== DOCKER ==========
-# (nếu dùng)
 docker-compose.override.yml
 *.dockerignore
 Dockerfile.*
 
-# ========== CÁC FILE DỰ ÁN CỤ THỂ ==========
-# File cấu hình riêng (nếu có)
+# ========== LOCAL CONFIGS & TEMP DIRECTORIES ==========
 config.local.py
 config.local.json
 settings.local.py
 secrets.yaml
 secrets.yml
 
-# Thư mục tạm của pipeline
 temp/
 tmp/
 cache/
 uploads/
 downloads/
 outputs/
-
-mobileclip2_b.ts
+backend/temp/

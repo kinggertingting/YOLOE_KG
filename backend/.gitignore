@@ -8,6 +8,9 @@ __pycache__/
 dist/
 build/
 *.whl
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # --- Virtual Environment ---
 venv/
@@ -19,6 +22,8 @@ ENV/
 .env
 .env.local
 .env.*.local
+!.env.example
+!.env*.example
 
 # --- IDE / Editor ---
 .vscode/
@@ -36,10 +41,17 @@ node_modules/
 data/*
 !data/KG.json
 models/
+mobileclip2_b.ts
+*.pt
+*.pth
+*.onnx
+*.engine
 
-# --- Temp files (rất quan trọng) ---
+# --- Temp files ---
 temp/
 tmp/
+uploads/
+outputs/
 
 # --- Logs ---
 *.log
@@ -49,7 +61,4 @@ tmp/
 
 # --- System ---
 *.bak
-*.orig
-
-# File thừa bạn muốn xóa
-mobileclip2_b.ts
+*.orig
