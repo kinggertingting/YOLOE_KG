@@ -16,6 +16,7 @@ For full research architecture documentation and formulas, refer to the [Main Pr
 - `app/services/video_service.py`: Frame-by-frame processing pipeline, annotation rendering, and FFmpeg H.264 browser video conversion.
 - `data/KG.json`: Pre-processed ConceptNet relational triples.
 - `models/`: Storage directory for model weight files (e.g. `yoloe-26m-seg.pt`).
+- `notebooks/`: Jupyter Notebooks containing experiments on YOLOE, ConceptNet Knowledge Graph, and CLIP model fusion pipelines.
 
 ## 🚀 Quick Start
 
