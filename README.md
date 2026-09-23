@@ -10,27 +10,27 @@ Conventional object detectors often struggle with occluded targets, adverse ligh
 
 ```mermaid
 flowchart TD
-    A[Input Video / Frame] --> B[YOLOE Object Detector]
-    A --> C[CLIP Vision Encoder]
+    A["Input Video / Frame"] --> B["YOLOE Object Detector"]
+    A --> C["CLIP Vision Encoder"]
     
-    subgraph KG_Module [Knowledge Graph Engine]
-        D[ConceptNet / KG.json] --> E[Extract Relations: isa & atlocation]
-        E --> F[Generate Contextual Text Prompts]
+    subgraph KG_Module ["Knowledge Graph Engine"]
+        D["ConceptNet / KG.json"] --> E["Extract Relations: isa & atlocation"]
+        E --> F["Generate Contextual Text Prompts"]
     end
 
-    F --> G[CLIP Text Encoder]
-    C --> H[Calculate Scene-Prompt Similarity Scores]
+    F --> G["CLIP Text Encoder"]
+    C --> H["Calculate Scene-Prompt Similarity Scores"]
     G --> H
     
-    H --> I[KG.calculate_class_prior - Class Prior Score P_c]
-    B --> J[YOLOE Proposals & Confidence Score C_yoloe]
+    H --> I["KG.calculate_class_prior - Class Prior Score P_c"]
+    B --> J["YOLOE Proposals & Confidence Score C_yoloe"]
     
-    I --> K[Fusion Service - Dynamic Reranking]
+    I --> K["Fusion Service - Dynamic Reranking"]
     J --> K
     
     K --> L["Score_fused = (C_yoloe^alpha) * (P_c^(1-alpha))"]
-    L --> M[Non-Maximum Suppression NMS]
-    M --> N[Final Bounding Boxes & Rendered Video]
+    L --> M["Non-Maximum Suppression (NMS)"]
+    M --> N["Final Bounding Boxes & Rendered Video"]
 ```
 
 ### 1. 🎯 YOLOE (Promptable Open-Vocabulary Detector)
@@ -38,13 +38,13 @@ flowchart TD
 * **Mechanism**:
   * Extracts initial bounding boxes and initial confidence scores ($C_{\text{YOLOE}}$) across target object classes.
   * Dynamically conditions text embeddings (`set_classes`) using prompt strings for specified target categories.
-  * Operates at a low initial confidence threshold ($\text{CONF\_THRESHOLD} = 0.03$) to maximize recall, ensuring potential object candidates in challenging scenes are captured before fusion.
+  * Operates at a low initial confidence threshold (`CONF_THRESHOLD` = 0.03) to maximize recall, ensuring potential object candidates in challenging scenes are captured before fusion.
 
 ### 2. 🧠 Knowledge Graph Engine (ConceptNet)
 * **Role**: Provides structured commonsense context and environmental prior knowledge.
 * **Core Relations**:
-  * **`isa`**: Captures hierarchical and categorical taxonomy (e.g., `person` $\rightarrow$ `a photo of a human`, `a photo of a pedestrian`).
-  * **`atlocation`**: Captures environmental and spatial co-occurrence contexts (e.g., `car` $\rightarrow$ `a photo of a car in a street`, `a photo of a car in a parking lot`).
+  * **`isa`**: Captures hierarchical and categorical taxonomy (e.g., `person` → `a photo of a human`, `a photo of a pedestrian`).
+  * **`atlocation`**: Captures environmental and spatial co-occurrence contexts (e.g., `car` → `a photo of a car in a street`, `a photo of a car in a parking lot`).
 * **Processing**: Cleans noisy triples, normalizes concept URIs, and constructs a structured prompt map $M(c)$ for each target class $c$.
 
 ### 3. 👁️ CLIP (Vision-Language Alignment)
@@ -53,22 +53,27 @@ flowchart TD
   * Encodes image frame features $f_I(I)$ using **CLIP Vision Transformer**.
   * Encodes textual prompts $f_T(t)$ for all $t \in M(c)$ using **CLIP Text Encoder**.
   * Computes cosine similarity scores between image features and textual prompt embeddings:
-    $$S(I, t) = \frac{f_I(I) \cdot f_T(t)}{\|f_I(I)\| \|f_T(t)\|}$$
+
+$$S(I, t) = \frac{f_I(I) \cdot f_T(t)}{\|f_I(I)\| \|f_T(t)\|}$$
 
 ### 4. 🔀 Multi-Modal Fusion & Dynamic Reranking
 * **Role**: Fuses YOLOE confidence scores with scene-level Class Prior scores derived from KG + CLIP.
 * **Mathematical Formulation (Geometric Weighted Fusion)**:
   1. **Class Prior Calculation**:
      Prompt similarity scores are averaged per target class and Min-Max normalized across classes to obtain the contextual Class Prior $P(c) \in [0, 1]$:
-     $$P(c) = \text{Normalize}\left(\frac{1}{|M(c)|} \sum_{t \in M(c)} S(I, t)\right)$$
+
+$$P(c) = \text{Normalize}\left(\frac{1}{|M(c)|} \sum_{t \in M(c)} S(I, t)\right)$$
+
   2. **Geometric Weighted Reranking**:
      For candidate detections with low confidence ($C_{\text{YOLOE}} < \text{LOW\_CONF\_THR}$), the fused confidence score is computed as:
-     $$C_{\text{fused}} = C_{\text{YOLOE}}^{\alpha} \times P(c)^{(1 - \alpha)}$$
+
+$$C_{\text{fused}} = C_{\text{YOLOE}}^{\alpha} \times P(c)^{(1 - \alpha)}$$
+
      where $\alpha$ is the fusion weighting coefficient (default $\alpha = 0.75$).
 * **Benefits**:
   * **Object Rescue**: Candidates with lower visual confidence due to partial occlusion or shadow are rescued if the scene context strongly indicates class likelihood.
   * **False Positive Suppression**: Reduces spurious detections that conflict with environmental context.
-* **Post-Processing**: Applies Non-Maximum Suppression (NMS, $\text{IoU} = 0.7$) to eliminate redundant bounding boxes.
+* **Post-Processing**: Applies Non-Maximum Suppression (NMS, `IoU` = 0.7) to eliminate redundant bounding boxes.
 
 ---
 
@@ -90,9 +95,9 @@ To demonstrate and visualize the research model in action, an interactive **Web 
 ## 💻 Demo Web Application Setup & Usage Guide
 
 ### 📋 Prerequisites
-* **Python**: $\ge 3.10$
-* **Node.js**: $\ge 18.0$ (Node.js 20+ recommended)
-* **PyTorch**: $\ge 2.6.0$ *(Mandatory for CVE-2025-32434 security compliance)*
+* **Python**: ≥ 3.10
+* **Node.js**: ≥ 18.0 (Node.js 20+ recommended)
+* **PyTorch**: ≥ 2.6.0 *(Mandatory for CVE-2025-32434 security compliance)*
 * **FFmpeg**: Installed on system PATH (required for H.264 video encoding)
 
 ---
@@ -189,6 +194,7 @@ YOLOE_KG/
 │   ├── data/
 │   │   └── KG.json          # Knowledge Graph triple store (ConceptNet)
 │   ├── models/              # Model weights directory (*.pt)
+│   ├── notebooks/           # Jupyter notebooks for YOLOE + KG + CLIP experiments
 │   ├── requirements.txt     # Python requirements
 │   ├── Dockerfile           # Backend container specification
 │   └── docker-compose.yml   # Docker deployment script
@@ -225,7 +231,7 @@ YOLOE_KG/
 
 ## 🛡️ Security Advisory (CVE-2025-32434)
 
-The backend enforces a mandatory PyTorch version guard (`_ensure_torch_version_safe`). Due to critical vulnerability CVE-2025-32434 in pre-2.6 `torch.load` deserialization, this system requires **PyTorch $\ge 2.6.0$** to guarantee secure weight loading.
+The backend enforces a mandatory PyTorch version guard (`_ensure_torch_version_safe`). Due to critical vulnerability CVE-2025-32434 in pre-2.6 `torch.load` deserialization, this system requires **PyTorch ≥ 2.6.0** to guarantee secure weight loading.
 
 ---
 

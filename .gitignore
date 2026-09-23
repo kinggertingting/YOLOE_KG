@@ -102,6 +102,10 @@ coverage.xml
 # Jupyter Notebooks
 .ipynb_checkpoints/
 *.ipynb
+!backend/notebooks/*.ipynb
+!notebooks/*.ipynb
+!backend/notebooks/**/*.ipynb
+!notebooks/**/*.ipynb
 
 
 # ========== YOLO / MACHINE LEARNING / MODEL WEIGHTS ==========
