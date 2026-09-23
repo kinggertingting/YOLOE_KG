@@ -77,6 +77,68 @@ $$C_{\text{fused}} = C_{\text{YOLOE}}^{\alpha} \times P(c)^{(1 - \alpha)}$$
 
 ---
 
+## 📊 Experimental Results & Benchmarks
+
+The proposed **YOLOE + KG + CLIP** framework was evaluated on a 10,000-image benchmark subset of the **BDD100K** driving dataset (covering day/night scenes and complex weather conditions).
+
+### 1. ⚙️ Evaluation Protocol & Hyperparameters
+* **Dataset Protocol**: 10,000 frames evaluated across **7 Seen Classes** (`person`, `car`, `traffic sign`, `traffic light`, `truck`, `bus`, `train`) and **3 Unseen Classes** (`bike`, `rider`, `motor`) for Zero-Shot Object Detection (ZSD).
+* **Hardware Setup**: Kaggle Notebook (Ubuntu 22.04 LTS, 2× NVIDIA Tesla T4 32GB VRAM, PyTorch 2.10, CUDA 13.0).
+* **Optimal Hyperparameters**:
+  * `PRED_CONF` = `0.01` (minimum initial candidate proposal threshold)
+  * `LOW_CONF_THRES` = `0.3` (threshold to trigger KG-CLIP contextual reranking)
+  * `ALPHA` ($\alpha$) = `0.75` (geometric weighted mean balance coefficient)
+  * `IOU_NMS` = `0.7` (post-reranking NMS threshold)
+
+---
+
+### 2. 📈 Quantitative Performance Comparison vs. Baselines
+
+Benchmarking against baseline **YOLOE** (`yoloe-26m-seg`) and **YOLO-World** (`yolov8m-worldv2`):
+
+| Method | Precision | Recall | F1-Score | mAP50 | mAP50-95 | Macro F1 | FPS |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **YOLOE Baseline** | 0.8017 | 0.2294 | 0.3568 | 0.3034 | 0.1697 | 0.2768 | **33.19** |
+| **YOLO-World** | **0.8456** | 0.2182 | 0.3469 | 0.2712 | 0.1636 | 0.2694 | 45.60 |
+| **YOLOE + KG + CLIP (Proposed)** | 0.7730 | **0.2694** | **0.3996** | **0.3101** | **0.1715** | **0.2939** | 16.59 |
+
+> [!NOTE]
+> **Key Improvement**: The proposed framework achieved a **+4.00% increase in Recall** and **+4.28% increase in F1-Score** over baseline YOLOE by successfully rescuing **7,269 True Positive object instances** previously missed due to low visual confidence.
+
+---
+
+### 3. 🏷️ Class-Wise F1-Score Breakdown
+
+| Class Name | Category Type | YOLOE Baseline | YOLO-World | YOLOE + KG + CLIP (Proposed) |
+| :--- | :---: | :---: | :---: | :---: |
+| `person` | Seen | 0.4763 | 0.4625 | **0.4891** |
+| `car` | Seen | 0.3787 | 0.3954 | **0.4357** |
+| `truck` | Seen | 0.4560 | 0.4278 | **0.4591** |
+| `bus` | Seen | 0.4444 | **0.4497** | 0.4221 |
+| `traffic light` | Seen | 0.2820 | 0.2060 | **0.3287** |
+| `traffic sign` | Seen | 0.2846 | 0.2344 | **0.3134** |
+| `train` | Seen | 0.1412 | 0.1154 | **0.1474** |
+| `rider` | Unseen | 0.0108 | 0.0000 | **0.0229** |
+| `bike` | Unseen | 0.2936 | **0.4031** | 0.3203 |
+| `motor` | Unseen | 0.0000 | 0.0000 | 0.0000 |
+| **Macro F1 Average** | **Overall** | **0.2768** | **0.2694** | **0.2939** |
+
+---
+
+### 4. 🔬 Ablation Study (Component Analysis)
+
+| Component Configuration | Precision | Recall | F1-Score | mAP50 | mAP50-95 | Macro F1 | FPS |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **YOLOE + KG (Direct Prompt Injection)** | 0.1520 | 0.0510 | 0.0760 | 0.0980 | 0.0560 | 0.0646 | 33.58 |
+| **YOLOE + CLIP (Bounding Box Cropping)** | **0.7897** | 0.2419 | 0.3704 | 0.3047 | 0.1710 | 0.2842 | 0.76 |
+| **YOLOE + KG + CLIP (Proposed)** | 0.7730 | **0.2694** | **0.3996** | **0.3101** | **0.1715** | **0.2939** | **16.59** |
+
+* **Direct KG Injection Bottleneck**: Passing long, verbose ConceptNet prompts directly into YOLOE `set_classes` altered text embedding directions, causing misalignment with visual features (mAP50 dropped to 0.0980).
+* **Crop-based Evaluation Bottleneck**: Cropping individual candidate bounding boxes for CLIP inference improves accuracy, but slows throughput to 0.76 FPS.
+* **Proposed Context Reranking Solution**: Using ConceptNet KG to construct scene-level priors matched via CLIP text-image embeddings achieves optimal accuracy while maintaining practical 16.59 FPS speeds.
+
+---
+
 ## 🌐 Demo Web Application Overview
 
 To demonstrate and visualize the research model in action, an interactive **Web Research Dashboard** has been developed.
@@ -235,6 +297,16 @@ The backend enforces a mandatory PyTorch version guard (`_ensure_torch_version_s
 
 ---
 
-## 📜 License & Citation
+## 📜 Academic Thesis & Citation
 
-Research & Thesis Project — Open-Vocabulary Autonomous Driving Object Detection via YOLOE, Knowledge Graph, and CLIP Multi-Modal Fusion.
+This research repository is based on the Bachelor's Engineering Thesis (*Luận Văn Tốt Nghiệp Kỹ Sư*):
+
+```text
+Title:        Nghiên cứu Knowledge Graph và YOLO cho bài toán Zero-Shot Object Detection
+              (Research on Knowledge Graph and YOLO for Zero-Shot Object Detection)
+Institution:  Ho Chi Minh City University of Agriculture and Forestry (Trường Đại học Nông Lâm TP.HCM - NLU)
+Faculty:      Faculty of Information Technology (Khoa Công nghệ Thông tin)
+Authors:      Nguyễn Thiện & Phạm Quốc Khánh (Class of 2022 – 2026)
+Advisors:     TS. Nguyễn Văn Dũ & ThS. Đặng Minh Tiến
+Date:         August 25, 2026
+```
