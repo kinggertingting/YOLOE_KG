@@ -65,7 +65,7 @@ $$S(I, t) = \frac{f_I(I) \cdot f_T(t)}{\|f_I(I)\| \|f_T(t)\|}$$
 $$P(c) = \text{Normalize}\left(\frac{1}{|M(c)|} \sum_{t \in M(c)} S(I, t)\right)$$
 
   2. **Geometric Weighted Reranking**:
-     For candidate detections with low confidence ($C_{\text{YOLOE}} < \text{LOW\_CONF\_THR}$), the fused confidence score is computed as:
+     For candidate detections with low confidence ($C_{\text{YOLOE}} <$ `LOW_CONF_THR`), the fused confidence score is computed as:
 
 $$C_{\text{fused}} = C_{\text{YOLOE}}^{\alpha} \times P(c)^{(1 - \alpha)}$$
 
